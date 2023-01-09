@@ -24,6 +24,9 @@ var (
 	networks = map[string]*Network{}
 )
 
+//网络端点：连接容器与网络的。代表容器接入网络的端点，可以形象的认为一个Endpoints对容器来说，就是一张物理网卡。
+//网络端点中包括连接到网络的一些信息，比如地址、veth设备、端口映射、连接的容器和网络等信息。
+//网络端点的信息传输，需要靠网络功能的两个组件配合完成，这两个组件分别为  网络驱动  IPAM
 type Endpoint struct {
 	ID string `json:"id"`
 	Device netlink.Veth `json:"dev"`
@@ -34,22 +37,28 @@ type Endpoint struct {
 }
 
 
-
+//网络是容器的一个集合.代表一组可以直接相互通信的Endpoints的集合。
+//网络中会包括这个网络相关的配置，比如网络的容器地址段、网络操作所调用的网络驱动等信息。
 type Network struct {
-	Name string
-	IpRange *net.IPNet
-	Driver string
+	Name string	//网络名
+	IpRange *net.IPNet	//地址段
+	Driver string	//网络驱动名
 }
 
+//网络驱动：网络功能中的一个组件。
+//不同驱动对网络的创建、连接、销毁的策略不同。通过在网络创建时，指定不同的网络驱动来定义使用哪个驱动来做网络的配置。
+//例如bridge驱动的动作是： 创建linux bridge、挂载Veth设备。
 type NetworkDriver interface {
+	//驱动名
 	Name() string
-	Create(subnet string, name string) (*Network, error)
-	Delete(network Network) error
-	Connect(network *Network, endpoint *Endpoint) error
-	Disconnect(network Network, endpoint *Endpoint) error
+	Create(subnet string, name string) (*Network, error)	//创建网络
+	Delete(network Network) error	//删除网络
+	Connect(network *Network, endpoint *Endpoint) error		//连接容器网络端点到网络。
+	Disconnect(network Network, endpoint *Endpoint) error	//从网络上移除容器网络端点。
 }
 
 func (nw *Network) dump(dumpPath string) error {
+	//检查保存的目录是否存在，不存在则创建
 	if _, err := os.Stat(dumpPath); err != nil {
 		if os.IsNotExist(err) {
 			os.MkdirAll(dumpPath, 0644)
@@ -57,8 +66,9 @@ func (nw *Network) dump(dumpPath string) error {
 			return err
 		}
 	}
-
+	//保存文件的名字是网络的名字。
 	nwPath := path.Join(dumpPath, nw.Name)
+	//打开保存的文件用于写入。后面打开的模式参数分别是：存在内容则清空、只写入、不存在则创建。
 	nwFile, err := os.OpenFile(nwPath, os.O_TRUNC | os.O_WRONLY | os.O_CREATE, 0644)
 	if err != nil {
 		logrus.Errorf("error：", err)
@@ -146,19 +156,20 @@ func Init() error {
 	return nil
 }
 
+//创建网络
 func CreateNetwork(driver, subnet, name string) error {
-	_, cidr, _ := net.ParseCIDR(subnet)
-	ip, err := ipAllocator.Allocate(cidr)
+	_, cidr, _ := net.ParseCIDR(subnet)		//将网段的字符串转换成net.IPNet的对象
+	ip, err := ipAllocator.Allocate(cidr)	//通过IPAM分配网关IP，获取到网段中第一个IP作为网关的IP。
 	if err != nil {
 		return err
 	}
 	cidr.IP = ip
-
+	//调用指定的网络驱动创建网络，这里的drivers字典是各个网络驱动的实例字典，通过调用网络驱动的create方法创建网络。
 	nw, err := drivers[driver].Create(cidr.String(), name)
 	if err != nil {
 		return err
 	}
-
+	//将网络信息保存在文件系统中，以便查询、在网络上连接网络端点。
 	return nw.dump(defaultNetworkPath)
 }
 

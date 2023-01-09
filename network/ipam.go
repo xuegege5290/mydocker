@@ -11,6 +11,7 @@ import (
 
 const ipamDefaultAllocatorPath = "/var/run/mydocker/network/ipam/subnet.json"
 
+//IPAM为网络功能中的一个组件。 用于网络IP地址的分配和释放，包括容器的IP地址和网络网关的IP地址。
 type IPAM struct {
 	SubnetAllocatorPath string
 	Subnets *map[string]string
