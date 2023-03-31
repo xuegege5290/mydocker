@@ -30,7 +30,14 @@ type ContainerInfo struct {
 	Volume      string `json:"volume"`     //容器的数据卷
 	PortMapping []string `json:"portmapping"` //端口映射
 }
-
+/*
+这里是父进程，也就是当前进程执行的内容，
+1.这里的/process/self/exe调用中，/proc/self/指的是当前运行进程自己的环境。exec其实就是自己调用自己
+使用这种方式对创建出来的进程进行初始化
+2.后面的args是参数，其中init是传递给本进程的第一个参数，在本例中，其实就是会去调用initCommand去初始化
+进程的一下环境和资源
+3.下面的clone
+*/
 func NewParentProcess(tty bool, containerName, volume, imageName string, envSlice []string) (*exec.Cmd, *os.File) {
 	readPipe, writePipe, err := NewPipe()
 	if err != nil {

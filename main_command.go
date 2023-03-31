@@ -55,6 +55,10 @@ var runCommand = cli.Command{
 			Usage: "port mapping",
 		},
 	},
+	//这里是run命令执行的真正函数
+	//1.判断参数书否包含command
+	//2.获取用户指定的command
+	//3.调用Run function去准备启动的容器
 	Action: func(context *cli.Context) error {
 		if len(context.Args()) < 1 {
 			return fmt.Errorf("Missing container command")
@@ -95,6 +99,8 @@ var runCommand = cli.Command{
 var initCommand = cli.Command{
 	Name:  "init",
 	Usage: "Init container process run user's process in container. Do not call it outside",
+	//获取传递过来的command参数
+	//执行容器初始化操作
 	Action: func(context *cli.Context) error {
 		log.Infof("init come on")
 		err := container.RunContainerInitProcess()
