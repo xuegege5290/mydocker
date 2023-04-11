@@ -10,7 +10,9 @@ import (
 	"strings"
 	"syscall"
 )
-
+//该函数是init函数在容器内部执行的。也就是说代码执行到这里，容器所在的进程其实就已经创建出来了。
+//这是本容器执行的第一个进程。
+//使用mount先去挂载proc文件系统，以便后面通过ps等系统命令去查看当前进程
 func RunContainerInitProcess() error {
 	cmdArray := readUserCommand()
 	if cmdArray == nil || len(cmdArray) == 0 {

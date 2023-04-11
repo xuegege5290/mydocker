@@ -36,7 +36,8 @@ type ContainerInfo struct {
 使用这种方式对创建出来的进程进行初始化
 2.后面的args是参数，其中init是传递给本进程的第一个参数，在本例中，其实就是会去调用initCommand去初始化
 进程的一下环境和资源
-3.下面的clone
+3.下面的clone参数就是去fork出来一个新进程，并且使用namespace隔离新创建的进程和外部环境。
+4. 如果用户指定了-ti参数，就需要把当前进程的输入输出导入到标准的输入输出上。
 */
 func NewParentProcess(tty bool, containerName, volume, imageName string, envSlice []string) (*exec.Cmd, *os.File) {
 	readPipe, writePipe, err := NewPipe()
@@ -82,7 +83,11 @@ func NewParentProcess(tty bool, containerName, volume, imageName string, envSlic
 	return cmd, writePipe
 }
 
+//在Go语言中，os.Pipe函数用于创建一个管道，该管道可以在同一个进程内的不同协程之间进行通信，
+//也可以在不同进程之间进行通信。管道是一种特殊的文件描述符，它可以用于在进程之间进行双向通信，一个进程可以将数据写入管道，另一个进程可以从管道中读取数据。
 func NewPipe() (*os.File, *os.File, error) {
+	//该函数返回两个文件描述符，其中一个用于读取管道中的数据，另一个用于写入数据到管道中。
+	//在函数执行过程中，会创建一个匿名管道，并返回两个文件描述符，它们分别对应管道的读端和写端。可以通过这两个文件描述符在进程之间进行数据传输。
 	read, write, err := os.Pipe()
 	if err != nil {
 		return nil, nil, err

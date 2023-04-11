@@ -14,10 +14,12 @@ import (
 	"strings"
 	"time"
 )
-
+//main函数中的Run做了什么？
 func Run(tty bool, comArray []string, res *subsystems.ResourceConfig, containerName, volume, imageName string,
 	envSlice []string, nw string, portmapping []string) {
+	//获取10位字符串给containerdID
 	containerID := randStringBytes(10)
+	//如果容器名字为空，就用上述随机产生的10位字符创容器ID
 	if containerName == "" {
 		containerName = containerID
 	}
@@ -27,7 +29,8 @@ func Run(tty bool, comArray []string, res *subsystems.ResourceConfig, containerN
 		log.Errorf("New parent process error")
 		return
 	}
-
+	//这里的Start方法才是真正开始前面创建好的command的调用，首先会clone一个Namespace隔离的进程。
+	//然后在子进程中，调用/proc/self/exe,也就是调用自己，发送init参数，调用我们写的init方法，去初始化容器的一些资源。
 	if err := parent.Start(); err != nil {
 		log.Error(err)
 	}

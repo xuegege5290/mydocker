@@ -9,7 +9,7 @@ import (
 	"github.com/xianlubird/mydocker/network"
 	"os"
 )
-
+//定义了runCommand的FLAGS,其作用类似于运用命令行时使用--来指定参数。
 var runCommand = cli.Command{
 	Name:  "run",
 	Usage: `Create a container with namespace and cgroups limit ie: mydocker run -ti [image] [command]`,
@@ -59,16 +59,23 @@ var runCommand = cli.Command{
 	//1.判断参数书否包含command
 	//2.获取用户指定的command
 	//3.调用Run function去准备启动的容器
+	//这里的context是....../cli包中的‘context‘类型，它是一个结构体。用于在命令行应用程序中传递请求范围的数据和选项。
+	//在使用cli包编写命令行程序时，可以通过定义一个命令的处理函数，来获取传递给该命令的‘context‘对象。并从中获取所需的选项和参数。
+	//通过这个函数的参数，它可以获取传递给该命令的选项和参数。
 	Action: func(context *cli.Context) error {
+		//context对象中的数据是cli包职工进行处理和解析后生成的，它包含了命令行应用程序中所有的选项和参数信息，以及一些其他的元数据信息。
+		//在处理函数func中，我们可以通过调用context对象的各种方法获取其中的数据和元数据，并进行相应的处理。
 		if len(context.Args()) < 1 {
 			return fmt.Errorf("Missing container command")
 		}
+		//循环读取传递过来的参数，组合成cmdArray字符串数组。
 		var cmdArray []string
 		for _, arg := range context.Args() {
 			cmdArray = append(cmdArray, arg)
 		}
 
 		//get image name
+		//context文件获取cmdArray字符串数组中的第一个值，为镜像名字。
 		imageName := cmdArray[0]
 		cmdArray = cmdArray[1:]
 
@@ -96,6 +103,7 @@ var runCommand = cli.Command{
 	},
 }
 
+//这里定义了initCommand的具体操作，此操作为内部方法，禁止外部调用。
 var initCommand = cli.Command{
 	Name:  "init",
 	Usage: "Init container process run user's process in container. Do not call it outside",
